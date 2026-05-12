@@ -11,6 +11,8 @@
 
     <script src="jspsych/dist/plugin-survey-html-form.js"></script>
 
+    <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe"></script>
+
     <link rel="stylesheet" href="jspsych/dist/jspsych.css" />
 
     <style>
@@ -268,9 +270,82 @@
     <script>
       const participantID = Math.random().toString(36).substr(2, 9);
       const exportFilename = `help_seeking_experiment_${participantID}.csv`;
+      const DATAPIPE_EXPERIMENT_ID = "rTb5jHHN2WQ1";
+      const osfProjectId = "ea7h6";
+      const osfDataComponentId = "njyct";
       const conditionCodeMap = { nocost: 1, normal: 2, burden: 3 };
       const themeCodeMap = { "①": 1, "②": 2, "③": 3, "④": 4, "⑤": 5 };
+      const datapipeExportColumns = [
+        "ID",
+        "row_type",
+        "questionnaire_name",
+        "gender",
+        "age",
+        "country",
+        "consent",
+        "game_understood",
+        "nocost_understood",
+        "normal_understood",
+        "burden_understood",
+        "trial_type",
+        "trial_index",
+        "time_elapsed",
+        "rt",
+        "condition",
+        "cost",
+        "trialNum",
+        "isPractice",
+        "theme",
+        "variant",
+        "vignette",
+        "choice",
+        "choice_label",
+        "success",
+        "success_prev",
+        "self_cost",
+        "other_cost",
+        "screenType",
+        "vulnerable_narcissism1",
+        "vulnerable_narcissism2",
+        "vulnerable_narcissism3",
+        "vulnerable_narcissism4",
+        "vulnerable_narcissism5",
+        "vulnerable_narcissism6",
+        "vulnerable_narcissism7",
+        "vulnerable_narcissism8",
+        "grandiose_narcissism1",
+        "grandiose_narcissism2",
+        "grandiose_narcissism3",
+        "grandiose_narcissism4",
+        "grandiose_narcissism5",
+        "grandiose_narcissism6",
+        "grandiose_narcissism7",
+        "grandiose_narcissism8",
+        "grandiose_narcissism9",
+        "grandiose_narcissism10",
+        "helpseeking_preferemce1",
+        "helpseeking_preferemce2",
+        "helpseeking_preferemce3",
+        "helpseeking_preferemce4R",
+        "helpseeking_preferemce5R",
+        "helpseeking_preferemce6R",
+        "helpseeking_preferemce7",
+        "helpseeking_preferemce8R",
+        "helpseeking_preferemce9R",
+        "helpseeking_preferemce10R",
+        "helpseeking_preferemce11R",
+        "depression1",
+        "depression2",
+        "depression3",
+        "depression4",
+        "depression5",
+        "depression6",
+        "depression7",
+        "depression8",
+        "depression9",
+      ];
       let exportPrepared = false;
+      let uploadResult = null;
 
       function prepareDataForExport() {
         if (exportPrepared) {
@@ -304,8 +379,150 @@
 
       function saveExperimentData() {
         prepareDataForExport();
-        jsPsych.data.get().localSave("csv", exportFilename);
+        const blob = new Blob([getDataPipeCSV()], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = exportFilename;
+        a.click();
+        URL.revokeObjectURL(url);
       }
+
+      function getDataPipeCSV() {
+        prepareDataForExport();
+        const escapeCSV = (value) => {
+          const text = value === null || value === undefined ? "" : String(value);
+          return `"${text.replace(/"/g, '""')}"`;
+        };
+
+        const allRows = jsPsych.data.get().values();
+        const decisionRows = jsPsych.data.get().filter({ screenType: "decision" }).values();
+        const metaFieldNames = [
+          "gender",
+          "age",
+          "country",
+          "consent",
+          "game_understood",
+          "nocost_understood",
+          "normal_understood",
+          "burden_understood",
+        ];
+        const questionnaireGroups = [
+          {
+            name: "narcissism",
+            fields: narcissismItems.map((item) => item.name),
+          },
+          {
+            name: "helpseeking",
+            fields: helpseekingItems.map((item) => item.name),
+          },
+          {
+            name: "depression",
+            fields: depressionItems.map((item) => item.name),
+          },
+        ];
+        const surveyFieldNames = questionnaireGroups.flatMap((group) => group.fields);
+        const surveyRows = allRows.filter((row) => row.screenType === "survey");
+        const sharedValues = {
+          ID: participantID,
+          row_type: "",
+          questionnaire_name: "",
+        };
+
+        metaFieldNames.forEach((fieldName) => {
+          sharedValues[fieldName] = "";
+        });
+
+        allRows.forEach((row) => {
+          const response = parseSurveyResponse(row.response || row.responses);
+
+          metaFieldNames.forEach((fieldName) => {
+            if (row[fieldName] !== undefined && row[fieldName] !== "") {
+              sharedValues[fieldName] = row[fieldName];
+            } else if (response[fieldName] !== undefined && response[fieldName] !== "") {
+              sharedValues[fieldName] = response[fieldName];
+            }
+          });
+        });
+
+        const exportRows = [];
+
+        decisionRows.forEach((row) => {
+          exportRows.push({
+            ...sharedValues,
+            ...row,
+            row_type: "decision",
+            questionnaire_name: "",
+            screenType: "decision",
+          });
+        });
+
+        questionnaireGroups.forEach((group) => {
+          const matchingSurveyRow = surveyRows.find((row) =>
+            group.fields.some((fieldName) => row[fieldName] !== undefined)
+          );
+          const response = parseSurveyResponse(matchingSurveyRow?.response || matchingSurveyRow?.responses);
+          const questionnaireRow = {
+            ...sharedValues,
+            row_type: "survey",
+            questionnaire_name: group.name,
+            screenType: "survey",
+          };
+
+          surveyFieldNames.forEach((fieldName) => {
+            questionnaireRow[fieldName] = "";
+          });
+
+          group.fields.forEach((fieldName) => {
+            if (matchingSurveyRow && matchingSurveyRow[fieldName] !== undefined && matchingSurveyRow[fieldName] !== "") {
+              questionnaireRow[fieldName] = matchingSurveyRow[fieldName];
+            } else if (response[fieldName] !== undefined && response[fieldName] !== "") {
+              questionnaireRow[fieldName] = response[fieldName];
+            }
+          });
+
+          exportRows.push(questionnaireRow);
+        });
+
+        const lines = [
+          datapipeExportColumns.map(escapeCSV).join(","),
+          ...exportRows.map((row) => datapipeExportColumns.map((column) => escapeCSV(row[column])).join(",")),
+        ];
+
+        return `${lines.join("\n")}\n`;
+      }
+
+      const save_data = {
+        type: jsPsychPipe,
+        action: "save",
+        experiment_id: DATAPIPE_EXPERIMENT_ID,
+        filename: exportFilename,
+        data_string: getDataPipeCSV,
+        wait_message: "<p>データを保存しています。この画面を閉じずにお待ちください。</p>",
+        data: {
+          screenType: "datapipe_upload",
+          osf_project_id: osfProjectId,
+          osf_data_component_id: osfDataComponentId,
+        },
+        on_finish: function (data) {
+          const result = data.result || {};
+          const message = result.message || result.error || "";
+
+          uploadResult = data.success
+            ? {
+                ok: true,
+                message: "DataPipe経由でOSFにCSVデータを保存しました。",
+              }
+            : {
+                ok: false,
+                message: `${message || "DataPipeへの保存に失敗しました。"} バックアップとしてCSVファイルをこの端末に保存しました。`,
+              };
+
+          if (!uploadResult.ok) {
+            saveExperimentData();
+          }
+        },
+      };
 
       const jsPsych = initJsPsych({
         on_finish: () => {
@@ -437,6 +654,16 @@
             data[name] = response[name];
           }
         });
+
+        if (data.gender !== undefined) {
+          if (data.gender === "逕ｷ諤ｧ") {
+            data.gender = "1";
+          } else if (data.gender === "螂ｳ諤ｧ") {
+            data.gender = "2";
+          } else {
+            data.gender = "3";
+          }
+        }
       }
 
       function buildSurveyPage(title, instruction, items, options) {
@@ -479,17 +706,17 @@
         html: renderSurveyCard("フェイスシート", `
           <p>以下の質問にお答えください。</p>
           <div class="screen-question">
-            <p>あなたの性別(せいべつ)を教(おし)えて下さい</p>
+            <p>あなたの性別を教えて下さい</p>
             <label><input type="radio" name="gender" value="男性" required> 男性</label><br>
             <label><input type="radio" name="gender" value="女性" required> 女性</label><br>
             <label><input type="radio" name="gender" value="どちらでもない" required> どちらでもない</label>
           </div>
           <div class="screen-question">
-            <p>あなたの年齢(ねんれい)を教(おし)えて下さい</p>
+            <p>あなたの年齢を教えて下さい</p>
             <input type="number" name="age" min="1" max="99" required style="width:6rem; padding:10px; border-radius:12px; border:1px solid rgba(70,87,102,.2);">
           </div>
           <div class="screen-question">
-            <p>あなたの出身地(しゅっしんち)を教(おし)えて下さい</p>
+            <p>あなたの出身地を教えて下さい</p>
             <input type="text" name="country" required style="width:100%; padding:10px; border-radius:12px; border:1px solid rgba(70,87,102,.2);">
           </div>
         `),
@@ -609,7 +836,7 @@
           <div class="info-block">
             <strong>基本的なルール</strong>
             <ul class="rule-list">
-              <li>社会生活で起きうる状況に対して，「このような状況の時に誰かに助けを求めますか？」と尋ねます。</li>
+              <li>学生生活で起きうる状況に対して，「このような状況の時に誰かに助けを求めますか？」と尋ねます。</li>
               <li>あなたは，その問いに対して助けを「求める」か「求めないか」を選択してください。</li>
               <li>あなたの選んだ選択肢によって，助けを求めた相手とあなたの次の行動が決まります。</li>
             </ul>
@@ -635,7 +862,7 @@
       /* =========================
          援助要請 試行関数
       ========================= */
-      function helpTrial(condition, trialNum, isPractice = false, stimulus = "誰かに助けを求めますか？", theme = null, variant = null) {
+      function helpTrial(condition, trialNum, isPractice = false, stimulus = "このような状況の時に誰かに助けを求めますか？", theme = null, variant = null) {
         let trial = {
           type: jsPsychHtmlButtonResponse,
           stimulus: renderPrompt(stimulus),
@@ -795,7 +1022,7 @@
           });
         }
         // 練習試行
-        timeline.push(...helpTrial(cond, 0, true, "あなたは今道に迷っています。<br>誰かに助けを求めますか？"));
+        timeline.push(...helpTrial(cond, 0, true, "あなたは今道に迷っています。<br>このような状況の時に誰かに助けを求めますか？"));
         // 次は本試行です
         timeline.push({
           type: jsPsychHtmlButtonResponse,
@@ -806,7 +1033,7 @@
         const vignetteOrder = shuffleArray(vignettes);
         vignetteOrder.forEach((item, index) => {
           const variant = themePatternAssignments[item.label][cond];
-          const stimulus = `<p>${item.patterns[variant]}</p><p>あなたは助けを求めますか？</p>`;
+          const stimulus = `<p>${item.patterns[variant]}</p><p>このような状況の時に誰かに助けを求めますか？</p>`;
           timeline.push(...helpTrial(cond, index + 1, false, stimulus, item.label, variant));
         });
 
@@ -852,19 +1079,18 @@
 
       timeline.push({
         type: jsPsychHtmlButtonResponse,
-        stimulus: renderNotice("ゲーム終了", "<p>これでゲームは終了です。次はアンケートに移ります。よろしければ「次へ」ボタンを押してください</p>", "案内"),
+        stimulus: renderNotice("ゲームの次はアンケートです", "<p>次はアンケートに移ります。よろしければ「次へ」ボタンを押してください</p>", "案内"),
         choices: ["次へ"],
       });
 
       timeline.push(...shuffleArray(surveyPages));
 
+      timeline.push(save_data);
+
       timeline.push({
         type: jsPsychHtmlButtonResponse,
-        stimulus: renderNotice("実験終了", "<p>実験にご協力ありがとうございました。</p><p>終了ボタンを押すと，CSVファイルが自動的に保存されます。</p>", "終了画面"),
+        stimulus: renderNotice("実験終了", "<p>実験にご協力ありがとうございました。</p><p>終了ボタンを押して終了してください。</p>", "終了画面"),
         choices: ["終了する"],
-        on_finish: () => {
-          saveExperimentData();
-        },
       });
 
       jsPsych.run(timeline);
