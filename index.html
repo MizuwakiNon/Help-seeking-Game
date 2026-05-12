@@ -728,10 +728,10 @@
         { prompt: "自分の欠点や失敗を少しでも悪く言われると、ひどく動揺する", name: "vulnerable_narcissism1" },
         { prompt: "人といると、馬鹿にされたり軽く扱われはしないかと不安になる", name: "vulnerable_narcissism2" },
         { prompt: "周りの人に自分が変な人に思われているのではないかと不安になる", name: "vulnerable_narcissism3" },
-        { prompt: "他人から間違いや欠点を指摘されると、憂鬱な気分が続く", name: "vulnerable_narcissism4" },
+        { prompt: "他人から間違いや欠点を指摘されると、憂うつな気分が続く", name: "vulnerable_narcissism4" },
         { prompt: "他人から間違いや欠点を指摘されると、自分の全ても否定されたように感じる", name: "vulnerable_narcissism5" },
-        { prompt: "他の人があの発言や行動に注目してくれないと、自分があの価値のない人間になったような気がする", name: "vulnerable_narcissism6" },
-        { prompt: "常時にすぐれた人や目上の人認めてもらえなければ、自信が持てない", name: "vulnerable_narcissism7" },
+        { prompt: "他の人が私の発言や行動に注目してくれないと、自分が価値のない人間になったような気がする", name: "vulnerable_narcissism6" },
+        { prompt: "常にすぐれた人や目上の人に認めてもらえなければ、自信がもてない", name: "vulnerable_narcissism7" },
         { prompt: "人に軽く扱われて、あとですごく腹が立つことがある", name: "vulnerable_narcissism8" },
         { prompt: "私には持って生まれたすばらしい才能がある", name: "grandiose_narcissism1" },
         { prompt: "私は他に並ぶ人がいないくらい、特別な存在である", name: "grandiose_narcissism2" },
@@ -748,7 +748,7 @@
       const helpseekingItems = [
         { prompt: "困っていることを解決するために、他者からの助言や援助が欲しい", name: "helpseeking_preferemce1" },
         { prompt: "自分が困っているときには、話を聞いてくれる人が欲しい", name: "helpseeking_preferemce2" },
-        { prompt: "困っていることを解決するために、自分と一緒に対処してくれる人があの欲しい", name: "helpseeking_preferemce3" },
+        { prompt: "困っていることを解決するために、自分と一緒に対処してくれる人が欲しい", name: "helpseeking_preferemce3" },
         { prompt: "自分は、よほどのことがない限り、人に相談することがない", name: "helpseeking_preferemce4R" },
         { prompt: "何事も人に頼らず、自分ですべて解決したい", name: "helpseeking_preferemce5R" },
         { prompt: "他人の援助や助言は、あまり役立たないと思っている", name: "helpseeking_preferemce6R" },
@@ -766,7 +766,7 @@
         { prompt: "疲れた感じがする、または気力がない", name: "depression4" },
         { prompt: "あまり食欲がない、または食べ過ぎる", name: "depression5" },
         { prompt: "自分はダメな人間だ、人生の敗北者だと気に病む、または 自分自身あるいは家族に申し訳がないと感じる", name: "depression6" },
-        { prompt: "新聞を読む、またはテレビを見ることなどに集中することが難しかったり", name: "depression7" },
+        { prompt: "新聞を読む、またはテレビを見ることなどに集中することが難しい", name: "depression7" },
         { prompt: "他人が気づくぐらいに動きや話し方のが遅くなる、あるいは反対に、 そわそわしたり、落ちつかず、ふだんよりも動き回ることがある", name: "depression8" },
         { prompt: "死んだ方がましだ、あるいは自分を何らかの方法で傷つけようと 思ったことがある", name: "depression9" },
       ];
@@ -1089,7 +1089,7 @@
 
       timeline.push({
         type: jsPsychHtmlButtonResponse,
-        stimulus: renderNotice("実験終了", "<p>実験にご協力ありがとうございました。</p><p>終了ボタンを押して終了してください。</p>", "終了画面"),
+        stimulus: renderNotice("実験終了", "<p>実験にご協力ありがとうございました。</p><p>ウィンドウを閉じて終了してください。</p>", "終了画面"),
         choices: ["終了する"],
       });
 
