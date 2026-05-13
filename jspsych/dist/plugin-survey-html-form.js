@@ -73,6 +73,7 @@ var jsPsychSurveyHtmlForm = (function (jspsych) {
       }
       html += trial.html;
       html += '<input type="submit" id="jspsych-survey-html-form-next" class="jspsych-btn jspsych-survey-html-form" value="' + trial.button_label + '"></input>';
+      html += '<div id="jspsych-survey-html-form-error" class="jspsych-survey-html-form-error"></div>';
       html += "</form>";
       display_element.innerHTML = html;
       if (trial.autofocus !== "") {
@@ -89,9 +90,18 @@ var jsPsychSurveyHtmlForm = (function (jspsych) {
       }
       display_element.querySelector("#jspsych-survey-html-form").addEventListener("submit", (event) => {
         event.preventDefault();
+        var this_form = display_element.querySelector("#jspsych-survey-html-form");
+        var error_element = display_element.querySelector("#jspsych-survey-html-form-error");
+        if (!this_form.checkValidity()) {
+          error_element.textContent = "※入力忘れがあります";
+          if (typeof this_form.reportValidity === "function") {
+            this_form.reportValidity();
+          }
+          return;
+        }
+        error_element.textContent = "";
         var endTime = performance.now();
         var response_time = Math.round(endTime - startTime);
-        var this_form = display_element.querySelector("#jspsych-survey-html-form");
         var question_data = serializeArray(this_form);
         if (!trial.dataAsArray) {
           question_data = objectifyForm(question_data);
