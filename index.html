@@ -376,9 +376,11 @@
 
           row.cost = conditionCodeMap[row.condition] ?? "";
           row.choice_label = row.choice === 1 ? "求める" : "求めない";
-          row.success_prev = previousDecision && previousDecision.choice === 1 ? previousDecision.success : "";
+          row.success_prev = row.isPractice ? "" : (previousDecision && previousDecision.choice === 1 ? previousDecision.success : "");
           row.vignette = row.theme ? themeCodeMap[row.theme.charAt(0)] ?? "" : "";
-          previousDecision = row;
+          if (!row.isPractice) {
+            previousDecision = row;
+          }
         });
 
         exportPrepared = true;
@@ -663,9 +665,9 @@
         });
 
         if (data.gender !== undefined) {
-          if (data.gender === "逕ｷ諤ｧ") {
+          if (data.gender === "男性") {
             data.gender = "1";
-          } else if (data.gender === "螂ｳ諤ｧ") {
+          } else if (data.gender === "女性") {
             data.gender = "2";
           } else {
             data.gender = "3";
